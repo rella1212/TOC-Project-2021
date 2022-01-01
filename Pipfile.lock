@@ -131,7 +131,7 @@
                 "sha256:b7cf7d3fef75f1e4c80a96ca660efbd51473d7e8f39b5ab9210febc7809012a4"
             ],
             "markers": "python_version < '3.8'",
-            "version": "==4.10.0"
+            "version": "==4.8.2"
         },
         "itsdangerous": {
             "hashes": [
