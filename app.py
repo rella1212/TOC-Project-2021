@@ -5,7 +5,7 @@ from flask import Flask, jsonify, request, abort, send_file
 from dotenv import load_dotenv
 from linebot import LineBotApi, WebhookParser
 from linebot.exceptions import InvalidSignatureError
-from linebot.models import MessageEvent, TextMessage, TextSendMessage
+from linebot.models import MessageEvent, TextMessage, TextSendMessage, TemplateSendMessage, ButtonsTemplate, MessageTemplateAction
 
 from fsm import TocMachine
 from utils import send_text_message
@@ -14,23 +14,94 @@ load_dotenv()
 
 
 machine = TocMachine(
-    states=["user", "state1", "state2"],
+    states=["start", "user", "reserve", "rest_info", "meal_menu", "ask_phone",
+            "ask_people", "ask_date", "ask_time", "check_reserve", "store1_info", "store2_info"],
     transitions=[
         {
             "trigger": "advance",
-            "source": "user",
-            "dest": "state1",
-            "conditions": "is_going_to_state1",
+            "source": "start",
+            "dest": "user",
+            "conditions": "is_going_to_user",
         },
         {
             "trigger": "advance",
             "source": "user",
-            "dest": "state2",
-            "conditions": "is_going_to_state2",
+            "dest": "reserve",
+            "conditions": "is_going_to_reserve",
         },
-        {"trigger": "go_back", "source": ["state1", "state2"], "dest": "user"},
+        {
+            "trigger": "advance",
+            "source": "user",
+            "dest": "rest_info",
+            "conditions": "is_going_to_rest_info",
+        },
+        {
+            "trigger": "advance",
+            "source": "user",
+            "dest": "meal_menu",
+            "conditions": "is_going_to_meal_menu",
+        },
+        {
+            "trigger": "advance",
+            "source": "rest_info",
+            "dest": "store1_info",
+            "conditions": "is_going_to_store1",
+        },
+        {
+            "trigger": "advance",
+            "source": "rest_info",
+            "dest": "store2_info",
+            "conditions": "is_going_to_store2",
+        },
+        {
+            "trigger": "advance",
+            "source": "reserve",
+            "dest": "ask_phone",
+            "conditions": "accept_name",
+        },
+        {
+            "trigger": "advance",
+            "source": "ask_phone",
+            "dest": "ask_people",
+            "conditions": "accept_phone",
+        },
+        {
+            "trigger": "advance",
+            "source": "ask_people",
+            "dest": "ask_date",
+            "conditions": "accept_people",
+        },
+        {
+            "trigger": "advance",
+            "source": "ask_date",
+            "dest": "ask_time",
+            "conditions": "accept_date",
+        },
+        {
+            "trigger": "advance",
+            "source": "ask_time",
+            "dest": "check_reserve",
+            "conditions": "accept_time",
+        },
+        {
+            "trigger": "advance",
+            "source": "check_reserve",
+            "dest": "user",
+            "conditions": "reserve_correct",
+        },
+        {
+            "trigger": "advance",
+            "source": "check_reserve",
+            "dest": "reserve",
+            "conditions": "reserve_incorrect",
+        },
+
+        {"trigger": "go_back",
+            "source": ["store1_info", "store2_info", "meal_menu"],
+            "dest": "user"
+         },
     ],
-    initial="user",
+    initial="start",
     auto_transitions=False,
     show_conditions=True,
 )
@@ -92,7 +163,7 @@ def webhook_handler():
     except InvalidSignatureError:
         abort(400)
 
-    # if event is MessageEvent and message is TextMessage, then echo text
+    
     for event in events:
         if not isinstance(event, MessageEvent):
             continue
@@ -104,7 +175,7 @@ def webhook_handler():
         print(f"REQUEST BODY: \n{body}")
         response = machine.advance(event)
         if response == False:
-            send_text_message(event.reply_token, "Not Entering any State")
+            send_text_message(event.reply_token, "Not Correct input")
 
     return "OK"
 
