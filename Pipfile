@@ -14,4 +14,4 @@ Flask = "==1.0.2"
 pygsheet = "*"
 
 [requires]
-python_version = "3.6"
+python_version = "3.7"
