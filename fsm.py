@@ -7,7 +7,7 @@ from dotenv import load_dotenv
 from linebot import LineBotApi, WebhookParser
 from linebot.models import TextSendMessage
 from linebot.exceptions import LineBotApiError
-from linebot.models import MessageEvent, TextMessage, TemplateSendMessage, ButtonsTemplate, MessageTemplateAction
+from linebot.models import MessageEvent, TextMessage, TemplateSendMessage, ButtonsTemplate, MessageTemplateAction, ConfirmTemplate
 
 load_dotenv()
 
@@ -36,7 +36,7 @@ class TocMachine(GraphMachine):
 
     def is_going_to_rest_info(self, event):
         text = event.message.text
-        return text.lower() == "stores info"
+        return text.lower() == "branches info"
 
     def is_going_to_meal_menu(self, event):
         text = event.message.text
@@ -57,14 +57,16 @@ class TocMachine(GraphMachine):
                             template=ButtonsTemplate(
                                 title='Welcome to KFP!',
                                 text='Please choose the function',
+                                thumbnail_image_url='https://i.imgur.com/x4WvPaW.jpeg',
+                                image_aspect_ratio='rectangle',
                                 actions=[
                                     MessageTemplateAction(
                                         label='Reserve',
                                         text='Reserve'
                                     ),
                                     MessageTemplateAction(
-                                        label='Stores info',
-                                        text='Stores info'
+                                        label='Branches info',
+                                        text='Branches info'
                                     ),
                                     MessageTemplateAction(
                                         label='Meal menu',
@@ -106,7 +108,7 @@ class TocMachine(GraphMachine):
     def on_enter_meal_menu(self, event):
         print("I'm entering meal_menu")
         reply_token = event.reply_token
-        send_text_message(reply_token, "Menu")
+        send_text_message(reply_token, "https://kiarafriedphoenix.com/menu")
         self.go_back(event)
 
     def accept_name(self, event):
@@ -141,8 +143,17 @@ class TocMachine(GraphMachine):
 
     def accept_date(self, event):
         text = event.message.text
-        self.order_dict["date"] = text
-        return True
+        date = text
+        date_list = date.split('/')
+        if date_list[0] != "1":
+            line_bot_api.push_message(event.source.user_id, TextSendMessage(text="You can only reserve the date in this month.\nPlease choose again."))
+            return False
+        elif int(date_list[1]) > 31 or int(date_list[1]) < 1:
+            line_bot_api.push_message(event.source.user_id, TextSendMessage(text="Wrong input\nPlease choose again."))
+            return False
+        else:
+            self.order_dict["date"] = text
+            return True
 
     def on_enter_ask_time(self, event):
         print("I'm entering ask time")
@@ -168,8 +179,20 @@ class TocMachine(GraphMachine):
 
     def accept_time(self, event):
         text = event.message.text
-        self.order_dict["time"] = text
-        return True
+        date = self.order_dict['date']
+        date_list = date.split('/')
+        day = int(date_list[1])
+        hour = text
+        hour_list = hour.split(':')
+        h = int(hour_list[0]) - 7
+        time_reserve = wks.get_value((h, day+1))
+        print(time_reserve)
+        if time_reserve == "":
+            self.order_dict["time"] = text
+            return True
+        else:
+            line_bot_api.push_message(event.source.user_id, TextSendMessage(text="This time interval is reserved.\nPlease choose another time interval."))
+            return False
 
     def on_enter_check_reserve(self, event):
         print("I'm entering check reservation")
@@ -179,9 +202,27 @@ class TocMachine(GraphMachine):
         phone = "Phone: " + self.order_dict['phone'] + "\n"
         people = "People: " + str(self.order_dict['people']) + "\n"
         date = "Date: " + self.order_dict['date'] + "\n"
-        time = "Time: " + self.order_dict['time'] + "\n\n"
-        reservation_info = reservation_info + name + people + date + time + "Is it correct?\n(Please answer Correct or Incorrect)"
-        send_text_message(reply_token, reservation_info)
+        time = "Time: " + self.order_dict['time']
+        reservation_info = reservation_info + name + people + date + time
+        line_bot_api.push_message(event.source.user_id, TextSendMessage(text=reservation_info))
+        line_bot_api.push_message(event.source.user_id, TemplateSendMessage(
+                            alt_text='Confirm template',
+                            template=ConfirmTemplate(
+                                title='Is your reservation correct?',
+                                text='Is your reservation correct?',
+                                actions=[
+                                    MessageTemplateAction(
+                                        label='Correct',
+                                        text='Correct'
+                                    ),
+                                    MessageTemplateAction(
+                                        label='Incorrect',
+                                        text='Incorrect'
+                                    )
+                                ]
+                                )
+                            )
+                            )
 
     def reserve_correct(self, event):
         text = event.message.text
