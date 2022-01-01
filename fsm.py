@@ -1,5 +1,7 @@
 from transitions.extensions import GraphMachine
 import os
+import pygsheets
+import json
 from utils import send_text_message 
 from dotenv import load_dotenv
 from linebot import LineBotApi, WebhookParser
@@ -14,6 +16,10 @@ channel_secret = os.getenv("LINE_CHANNEL_SECRET", None)
 
 line_bot_api = LineBotApi(channel_access_token)
 parser = WebhookParser(channel_secret)
+gc = pygsheets.authorize(service_account_env_var = 'GDRIVE_API_CREDENTIALS')
+sht = gc.open_by_url('https://docs.google.com/spreadsheets/d/1HloG5pAHXrlLvyyiHUef0qYGCQkkBJkwMSt-kqhRWcQ/edit#gid=0')
+wks_list = sht.worksheets()
+wks = sht[0]
 
 class TocMachine(GraphMachine):
     def __init__(self, **machine_configs):
@@ -131,7 +137,7 @@ class TocMachine(GraphMachine):
     def on_enter_ask_date(self, event):
         print("I'm entering ask date")
         reply_token = event.reply_token
-        send_text_message(reply_token, "Please enter the date you want to reserve.\nEx: 1/1")
+        send_text_message(reply_token, "Please enter the date you want to reserve.\nEx: 1/1\n\n[Notice]: you can only reserve the date in this month.")
 
     def accept_date(self, event):
         text = event.message.text
@@ -140,8 +146,25 @@ class TocMachine(GraphMachine):
 
     def on_enter_ask_time(self, event):
         print("I'm entering ask time")
+        date = self.order_dict['date']
+        date_list = date.split('/')
+        day = int(date_list[1])
+        day_reserve = wks.get_values(start=(2,day+1),end=(13,day+1),include_tailing_empty=True, include_tailing_empty_rows=True)
+        s1 = 'The day reservation: '+date+'\n'
+        for i in range(len(day_reserve)):
+            x = day_reserve[i]
+            if x == ['']:
+                if i==0:
+                    s1+='0'+str(i+9)+':30  Empty\n'
+                else:
+                    s1+=str(i+9)+':30  Empty\n'
+            else:
+                if i==0:
+                    s1+='0'+str(i+9)+':30  Reserved\n'
+                else:
+                    s1+=str(i+9)+':30  Reserved\n'
         reply_token = event.reply_token
-        send_text_message(reply_token, "Please enter the time you want to reserve.\nEx: 9:30")
+        send_text_message(reply_token, s1+"\nPlease enter the time you want to reserve.\nEx: 9:30")
 
     def accept_time(self, event):
         text = event.message.text
@@ -163,6 +186,13 @@ class TocMachine(GraphMachine):
     def reserve_correct(self, event):
         text = event.message.text
         if text.lower() == "correct":
+            hour = self.order_dict['time']
+            hour_list = hour.split(':')
+            h = int(hour_list[0]) - 7
+            date = self.order_dict['date']
+            date_list = date.split('/')
+            day = int(date_list[1])
+            wks.update_value(addr=(h,day+1),val=(self.order_dict['name']+'\n'+self.order_dict['phone']+'\n'+str(self.order_dict['people'])))
             line_bot_api.push_message(event.source.user_id, TextSendMessage(text='Your reservation is confirmed.\nHave a nice day!'))
         return text.lower() == "correct"
 
