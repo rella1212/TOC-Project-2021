@@ -9,7 +9,7 @@
 
 ## 技術
 * Deploy with Heroku and git
-    * This bot runs on the cloud server.
+    * This bot runs on the Heroku cloud server.
 * GoogleSheet API、pygsheets
     * Connect this bot and the googlesheet in the cloud drive. 
 ## 使用說明
@@ -77,18 +77,19 @@ sht = gc.open_by_url('datasheet的網址')
 # 這個key的value即為整個JSON檔的內容
 ```
 ## 特別處理
-1. 可以多人同時使用這個line bot, 每個user有自己的state machine, 不會互相影響。
+1. 可以**多人同時使用**這個line bot, 每個user有自己的state machine, 不會互相影響。
 2. 訂位系統只能訂當月的日期，無法選擇已被預訂的時段。
 3. 訂位系統在check_correct state時仍會再次確認此日期時間是否被預訂，防止有其他人已經於同時段訂位成功卻覆蓋訂位的狀況。(Multi-threads: avoiding race condition)
 
 ## 總結
 
-這次的linebot最主要就是想寫訂位系統，並使用雲端的試算表紀錄訂位。
+這次的linebot一開始是想說要寫個有實用性的bot，把整個bot寫完整一點。後來就決定寫看看訂位系統，並使用雲端的google試算表紀錄訂位，方便店家可以直接查看。
 
 過程中在處理Heroku的環境遇到不少問題，後來調整了pipenv的python版本到和local端一樣的3.7.0，並且把package都重新安裝過就解決了。
 
 而googlesheet api跟pygsheets也花了蠻多時間研究的，因為要搬到heroku上面也可以執行，加上金鑰是JSON檔，找處理方式花了蠻多時間的。
 
+開發過程都是參考API的文件，覺得這次的作業最大收穫應該是訓練自己更會看文件了XD。
 
 ## Reference
 
