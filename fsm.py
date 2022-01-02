@@ -80,7 +80,7 @@ class TocMachine(GraphMachine):
         print("I'm entering order")
 
         reply_token = event.reply_token
-        send_text_message(reply_token, "Please enter your name.\nEx: Allen")
+        send_text_message(reply_token, "Please enter your name.\nEx: Allen\n\nIf you want to cancel this reservation, please type \"cancel this reservation\".")
 
     def on_enter_rest_info(self, event):
         print("I'm entering rest_info")
@@ -130,7 +130,7 @@ class TocMachine(GraphMachine):
     def on_enter_ask_phone(self, event):
         print("I'm entering ask phone")
         reply_token = event.reply_token
-        send_text_message(reply_token, "Please enter your phone.\nEx: 0912345678")
+        send_text_message(reply_token, "Please enter your phone.\nEx: 0912345678\n\nIf you want to cancel this reservation, please type \"cancel this reservation\".")
 
     def accept_phone(self, event):
         text = event.message.text
@@ -157,7 +157,7 @@ class TocMachine(GraphMachine):
         print("I'm entering ask date")
         reply_token = event.reply_token
         send_text_message(
-            reply_token, "Please enter the date you want to reserve.\nEx: 1/1\n\n[Notice]: you can only reserve the date in this month.")
+            reply_token, "Please enter the date you want to reserve.\nEx: 1/1")
 
     def accept_date(self, event):
         text = event.message.text
