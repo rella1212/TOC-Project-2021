@@ -144,7 +144,13 @@ def webhook_handler():
                     auto_transitions=False,
                     show_conditions=True,
                 )
-            user_list.append({'userID':userID,'machine':machine})
+            x = 0
+            for dic in user_list:
+                if dic.get('userID') ==  event.source.user_id:
+                    dic.update({'machine':machine})
+                    x = 1
+            if x == 0:
+                user_list.append({'userID':userID,'machine':machine})
             continue
         if not isinstance(event, MessageEvent):
             continue

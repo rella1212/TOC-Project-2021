@@ -130,7 +130,7 @@ class TocMachine(GraphMachine):
     def on_enter_ask_phone(self, event):
         print("I'm entering ask phone")
         reply_token = event.reply_token
-        send_text_message(reply_token, "Please enter your phone.\nEx: 0912345678\n\nIf you want to cancel this reservation, please type \"cancel this reservation\".")
+        send_text_message(reply_token, "Please enter your phone.\nEx: 0912345678")
 
     def accept_phone(self, event):
         text = event.message.text
