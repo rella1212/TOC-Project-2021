@@ -53,7 +53,7 @@ class TocMachine(GraphMachine):
     def on_enter_user(self, event):
         print("I'm entering user")
         line_bot_api.push_message(event.source.user_id, TemplateSendMessage(
-                            alt_text='Buttons template',
+                            alt_text='Welcome to KFP!',
                             template=ButtonsTemplate(
                                 title='Welcome to KFP!',
                                 text='Please choose the function',
@@ -87,7 +87,7 @@ class TocMachine(GraphMachine):
 
         reply_token = event.reply_token
         line_bot_api.reply_message(reply_token, TemplateSendMessage(
-                            alt_text='Buttons template',
+                            alt_text='Choose one of the branches',
                             template=ButtonsTemplate(
                                 title='Branch Information',
                                 text='Please choose one of the branches',
@@ -287,11 +287,13 @@ class TocMachine(GraphMachine):
     def on_enter_store1_info(self, event):
         print("I'm entering store1")
         reply_token = event.reply_token
-        send_text_message(reply_token, "Store1_info")
+        s = "Taichung Branches Info:\n\nAddress: No.450, Sec.1, Zhongshan Rd., Wuri Dist., Taichung City\nBusiness hours: 07:00~23:00, Everyday\nPhone: 04-2337-8852"
+        send_text_message(reply_token, s)
         self.go_back(event)
 
     def on_enter_store2_info(self, event):
         print("I'm entering store2")
         reply_token = event.reply_token
-        send_text_message(reply_token, "Store2_info")
+        s = "Taichung Branches Info:\n\nAddress: No.20, Daxue Rd., East Dist., Tainan City\nBusiness hours: 10:00~23:30, Everyday\nPhone: 06-209-8968"
+        send_text_message(reply_token, s)
         self.go_back(event)
