@@ -113,7 +113,7 @@ class TocMachine(GraphMachine):
     
     def cancel_reserve(self, event):
         text = event.message.text
-        if text.lower() == "cancel this reservation"
+        if text.lower() == "cancel this reservation":
             return True
         else:
             return False
